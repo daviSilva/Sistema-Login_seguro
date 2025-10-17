@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <title>Registrar — Meu Sistema Seguro</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <link rel="stylesheet" href="/css/register.css">
+</head>
+<body>
+  <main class="form-wrap" role="main" aria-labelledby="register-title">
+    <div class="form-head">
+      <div class="logo" aria-hidden="true"></div>
+      <h2 id="register-title">Criar Conta</h2>
+    </div>
+
+    <form method="post" action="/register" novalidate>
+      <div class="field">
+        <label>Nome
+          <input type="text" name="name" required autocomplete="name">
+        </label>
+      </div>
+
+      <div class="field">
+        <label>Email
+          <input type="email" name="email" required autocomplete="email">
+        </label>
+      </div>
+
+      <div class="field">
+        <label>Senha
+          <input type="password" name="password" required autocomplete="new-password">
+        </label>
+      </div>
+
+      <button class="submit" type="submit">Registrar</button>
+    </form>
+
+    <p class="note">Já tem conta? <a href="/login">Entrar</a></p>
+  </main>
+</body>
+</html>

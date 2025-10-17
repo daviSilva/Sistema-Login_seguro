@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <title>Meu Sistema Seguro</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <link rel="stylesheet" href="/css/index.css">
+</head>
+<body>
+  <div class="page">
+    <header class="site-header">
+      <div class="brand">
+        <div class="logo" aria-hidden="true"><img src="" alt=""></div>
+        <h1>Meu Sistema Seguro</h1>
+      </div>
+      <nav class="nav" id="nav-area">
+        <!-- conteúdo será preenchido por JS -->
+      </nav>
+    </header>
+
+    <main class="hero">
+      <div class="hero-inner">
+        <h2>Proteja seus dados com simplicidade</h2>
+        <p>Uma interface leve e segura para gerenciar contas. Registro rápido e login protegido.</p>
+
+        <div id="user-area" class="actions">
+          <!-- login / register / user actions rendered by JS -->
+        </div>
+
+        <div id="admin-panel" style="display:none; margin-top:18px;">
+          <h3>Admin Panel</h3>
+          <div>
+            <button class="btn" id="btn-list-users">Listar usuários</button>
+          </div>
+          <div id="admin-output" style="margin-top:12px; color:var(--muted)"></div>
+        </div>
+      </div>
+
+      <aside class="card">
+        <h3>Recursos</h3>
+        <ul>
+          <li>Autenticação segura</li>
+          <li>Armazenamento com MySQL</li>
+          <li>Proteções básicas de rate-limit e helmet</li>
+        </ul>
+      </aside>
+    </main>
+
+    <footer class="site-footer">
+      <small>© <span id="year"></span> Meu Sistema Seguro</small>
+    </footer>
+  </div>
+
+  <script>
+    document.getElementById('year').textContent = new Date().getFullYear();
+
+    async function fetchMe(){
+      const res = await fetch('/api/me', { credentials: 'same-origin' });
+      return res.ok ? res.json() : null;
+    }
+
+    function renderNav(userData){
+      const nav = document.getElementById('nav-area');
+      nav.innerHTML = '';
+      if (!userData || !userData.logged){
+        nav.innerHTML = '<a class="btn ghost" href="/login">Entrar</a> <a class="btn" href="/register">Criar conta</a>';
+      } else {
+        nav.innerHTML = '<span style="color:#fff; margin-right:12px">Olá, '+(userData.user.name||userData.user.email)+'</span>'
+          + '<form method="post" action="/logout" style="display:inline"><button class="btn secondary" type="submit">Sair</button></form>';
+      }
+    }
+
+    async function init(){
+      const info = await fetchMe();
+      renderNav(info);
+
+      const userArea = document.getElementById('user-area');
+      if (!info || !info.logged){
+        userArea.innerHTML = '<a class="cta" href="/register">Criar conta</a> <a class="link" href="/login">Já tenho conta</a>';
+      } else {
+        userArea.innerHTML = '<div style="color:#fff">Bem-vindo, <strong>'+(info.user.name||info.user.email)+'</strong></div>';
+      }
+
+      if (info && info.logged && info.user.isAdmin){
+        document.getElementById('admin-panel').style.display = 'block';
+        document.getElementById('btn-list-users').addEventListener('click', async ()=> {
+          const r = await fetch('/api/admin/users', { credentials: 'same-origin' });
+          const out = document.getElementById('admin-output');
+          if (!r.ok){ out.textContent = 'Erro: ' + (await r.json()).error; return; }
+          const data = await r.json();
+          out.innerHTML = '<ul style="padding-left:16px; margin:6px 0;">' + data.users.map(u => 
+            '<li>#'+u.id+' — '+(u.name||u.email)+' ('+u.email+') — admin:'+ (u.isAdmin? 'sim':'não') +
+            (!u.isAdmin ? ' <button data-id="'+u.id+'" class="btn promote" style="margin-left:8px">Promover</button>' : '') +
+            '</li>'
+          ).join('') + '</ul>';
+          // attach promote handlers
+          document.querySelectorAll('.promote').forEach(btn=>{
+            btn.addEventListener('click', async (e)=>{
+              const id = btn.getAttribute('data-id');
+              const p = await fetch('/api/admin/promote/'+id, { method:'POST', credentials:'same-origin' });
+              if (!p.ok){ alert('Erro: ' + JSON.stringify(await p.json())); return; }
+              alert('Usuário promovido.');
+              document.getElementById('btn-list-users').click();
+            });
+          });
+        });
+      }
+    }
+
+    init();
+  </script>
+</body>
+</html>

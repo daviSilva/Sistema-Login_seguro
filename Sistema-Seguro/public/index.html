@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <title>Meu Sistema Seguro</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <link rel="stylesheet" href="/css/index.css">
+</head>
+<body>
+  <div class="page">
+    <header class="site-header">
+      <div class="brand">
+        <div class="logo" aria-hidden="true"><img src="" alt=""></div>
+        <h1>Meu Sistema Seguro</h1>
+      </div>
+      <nav class="nav">
+        <a class="btn ghost" href="/login">Entrar</a>
+        <a class="btn" href="/register">Criar conta</a>
+      </nav>
+    </header>
+
+    <main class="hero">
+      <div class="hero-inner">
+        <h2>Proteja seus dados com simplicidade</h2>
+        <p>Uma interface leve e segura para gerenciar contas. Registro rápido e login protegido.</p>
+        <p class="actions">
+          <a class="cta" href="/register">Criar conta</a>
+          <a class="link" href="/login">Já tenho conta</a>
+        </p>
+      </div>
+      <aside class="card">
+        <h3>Recursos</h3>
+        <ul>
+          <li>Autenticação segura</li>
+          <li>Armazenamento com MongoDB</li>
+          <li>Proteções básicas de rate-limit e helmet</li>
+        </ul>
+      </aside>
+    </main>
+
+    <footer class="site-footer">
+      <small>© <span id="year"></span> Meu Sistema Seguro</small>
+    </footer>
+  </div>
+
+  <script>
+    document.getElementById('year').textContent = new Date().getFullYear();
+  </script>
+</body>
+</html>

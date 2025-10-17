@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <title>Login — Meu Sistema Seguro</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <link rel="stylesheet" href="/css/login.css">
+</head>
+<body>
+  <main class="card" role="main" aria-labelledby="login-title">
+    <h1 id="login-title">Entrar</h1>
+    <p class="lead">Acesse sua conta com segurança</p>
+
+    <form method="post" action="/login" novalidate>
+      <label>Email
+        <input type="email" name="email" required autocomplete="username">
+      </label>
+
+      <label>Senha
+        <input type="password" name="password" required autocomplete="current-password">
+      </label>
+
+      <button class="button-primary" type="submit">Entrar</button>
+    </form>
+
+    <p class="small">Não tem conta? <a href="/register">Criar conta</a></p>
+    <p class="footer-note">Protegido por medidas básicas de segurança</p>
+  </main>
+</body>
+</html>

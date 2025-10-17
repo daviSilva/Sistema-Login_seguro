@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <title>Dashboard — Meu Sistema Seguro</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <link rel="stylesheet" href="/css/dashboard.css">
+</head>
+<body>
+  <header class="header" role="banner">
+    <div class="brand">
+      <div class="logo" aria-hidden="true"></div>
+      <h1>Meu Sistema Seguro</h1>
+    </div>
+    <div class="actions">
+      <form method="post" action="/logout" style="margin:0;">
+        <button class="btn secondary" type="submit">Sair</button>
+      </form>
+    </div>
+  </header>
+
+  <div class="wrap" role="main">
+    <nav class="sidebar" aria-label="Navegação">
+      <a href="#" aria-current="page">Visão geral</a>
+      <a href="#">Conta</a>
+      <a href="#">Configurações</a>
+    </nav>
+
+    <section class="content">
+      <div class="card">
+        <div class="kv"><strong>Bem-vindo</strong><span> — área do usuário</span></div>
+      </div>
+
+      <div class="card">
+        <h3>Atividades recentes</h3>
+        <p class="muted">Nenhuma atividade por enquanto.</p>
+      </div>
+    </section>
+  </div>
+</body>
+</html>
