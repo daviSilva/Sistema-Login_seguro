@@ -1,238 +1,294 @@
-# 🧱 Sistema Seguro — Node.js + MySQL + EJS
+# Meu Sistema Seguro
 
-Um sistema completo de autenticação segura desenvolvido com **Node.js**, **Express**, **MySQL** e **EJS**, focado em **boas práticas de segurança**, **proteção contra ataques comuns** e **rastreabilidade de tentativas de login**.
+API/pequeno sistema de autenticação com páginas estáticas (login/register/dashboard), suporte a administração (campo `isAdmin`) e opção de banco SQLite (padrão) ou MySQL.
 
-Este projeto implementa:
-- ✅ Cadastro e login de usuários com senha criptografada (bcrypt)
-- ✅ Sessões seguras com MySQL (express-mysql-session)
-- ✅ Proteção CSRF e Helmet
-- ✅ Registro detalhado de tentativas de login (sucesso, erro, bloqueio)
-- ✅ Detecção de ataques (brute force / IP bloqueado)
-- ✅ Interface moderna com EJS + Bootstrap
-- ✅ Painel de logs de segurança (auditoria)
+Resumo rápido
+- Frontend leve: arquivos em `public/`
+- Back-end: Express (rotas em `src/`), sessões com `express-session`
+- Banco: SQLite por padrão (arquivo em `data/sqlite/database.sqlite`) — também possível usar MySQL
+- ORM: Sequelize (para SQLite/MySQL). Existe código legado com Mongoose em versões antigas — verifique `src/db.js` ou `app.js` para qual driver está ativo.
 
----
+Pré-requisitos
+- Node.js v16+ / npm
+- (Opcional MySQL) MySQL server + MySQL Workbench
 
-## 🚀 Tecnologias Utilizadas
-
-| Categoria | Tecnologia |
-|------------|-------------|
-| **Backend** | Node.js (v22+) |
-| **Framework Web** | Express.js |
-| **Banco de Dados** | MySQL / MariaDB |
-| **Template Engine** | EJS + express-ejs-layouts |
-| **Autenticação** | express-session + bcrypt |
-| **Segurança** | helmet, csurf, rate-limit |
-| **Logs e Auditoria** | MySQL + arquivo `.log` local |
-| **Gerenciamento de dependências** | npm |
-
----
-
-## ⚙️ Funcionalidades
-
-### 👤 **Autenticação**
-- Registro e login de usuários com criptografia segura (`bcrypt`).
-- Sessão armazenada no MySQL para persistência.
-- Logout seguro com limpeza de sessão e cookies.
-
-### 🔐 **Camadas de Segurança**
-- Proteção **CSRF** em todos os formulários.
-- **Helmet** para reforçar cabeçalhos HTTP.
-- **Rate limiting**: bloqueia excesso de tentativas de login.
-- **Bloqueio automático de IPs** após várias falhas.
-
-### 📊 **Logs de Tentativas**
-- Cada tentativa de login (sucesso, falha ou bloqueio) é registrada no banco:
-  - E-mail
-  - IP
-  - User-Agent
-  - Status (SUCCESS / FAIL / BLOCKED)
-  - Data/hora
-- Logs também podem ser gravados em `logs/login.log`.
-
-### 🧠 **Painel Administrativo**
-- Tela `/logs` protegida, mostrando as últimas tentativas de login, com cores por tipo:
-  - 🟩 `SUCCESS`
-  - 🟥 `FAIL`
-  - 🟨 `BLOCKED`
-
----
-
-## 🧩 Estrutura do Projeto
-
-```
-SISTEMA---SEGURO/
-├── app.js
-├── .env
-├── package.json
-├── /controllers
-│   └── authController.js
-├── /models
-│   └── User.js
-├── /routes
-│   └── authRoutes.js
-├── /views
-│   ├── layout.ejs
-│   ├── login.ejs
-│   ├── signup.ejs
-│   ├── dashboard.ejs
-│   └── logs.ejs
-├── /public
-│   └── (CSS, imagens, scripts estáticos)
-└── /logs
-    └── login.log
+Como baixar
+PowerShell:
+```powershell
+git clone <URL_DO_REPO> Projeto
+cd Projeto
 ```
 
----
-
-## 🛠️ Configuração do Ambiente
-
-### 1️⃣ Clonar o repositório
-```bash
-git clone https://github.com/seuusuario/sistema-seguro.git
-cd sistema-seguro
-```
-
-### 2️⃣ Instalar dependências
-```bash
+Instalação
+```powershell
+# instalar dependências
 npm install
+
+# instalar dependências nativas caso necessário (Windows)
+# npm install --global windows-build-tools  (se der erro ao instalar sqlite3)
 ```
 
-### 3️⃣ Criar o banco de dados
-Entre no seu MySQL e execute:
+Variáveis de ambiente
+Crie um arquivo `.env` na raiz (use `.env.example` como base). Principais variáveis:
 
-```sql
-CREATE DATABASE sistemaTeste;
-USE sistemaTeste;
+```env
+# Para SQLite (padrão)
+DB_DIALECT=sqlite
+DB_STORAGE=./data/sqlite/database.sqlite
 
-CREATE TABLE users (
-  id INT AUTO_INCREMENT PRIMARY KEY,
-  username VARCHAR(100) NOT NULL UNIQUE,
-  email VARCHAR(255) NOT NULL UNIQUE,
-  password VARCHAR(255) NOT NULL,
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
+# Para MySQL (se preferir)
+# DB_DIALECT=mysql
+# DB_NAME=sistema_seguro
+# DB_USER=root
+# DB_PASS=senha
+# DB_HOST=127.0.0.1
+# DB_PORT=3306
 
-CREATE TABLE login_attempts (
-  id INT AUTO_INCREMENT PRIMARY KEY,
-  email VARCHAR(255),
-  ip_address VARCHAR(50),
-  user_agent TEXT,
-  status ENUM('SUCCESS','FAIL','BLOCKED','ERROR') DEFAULT 'FAIL',
-  message TEXT,
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
+SESSION_SECRET=troque_em_producao
+PORT=3000
 ```
 
-> ⚙️ A tabela `sessions` será criada automaticamente pelo `express-mysql-session`.
-
----
-
-### 4️⃣ Configurar o `.env`
-
-Crie um arquivo `.env` na raiz do projeto:
-
+Inicializar banco (SQLite) e criar um admin opcional
+```powershell
+# cria pasta do DB, sincroniza modelos e (opcional) cria um admin
+npm run init-db
+# com admin
+npm run init-db -- admin@exemplo.com MinhaSenhaForte "Admin"
 ```
-DB_HOST=127.0.0.1
-DB_PORT=3308
-DB_USER=root
-DB_PASS=1234
-DB_NAME=sistemaTeste
-SESSION_SECRET=segredo123
-NODE_ENV=development
+(ou)
+```powershell
+node src/tools/init_db.js admin@exemplo.com SenhaForte! "Administrador"
 ```
 
----
-
-### 5️⃣ Executar o servidor
-
-```bash
-npm run dev
+Criar admin manualmente
+```powershell
+npm run create-admin -- admin@exemplo.com SenhaForte!
 # ou
-node app.js
+node src/scripts/create_admin.js admin@exemplo.com SenhaForte! "Administrador"
 ```
 
-💡 Acesse em: [http://localhost:3000](http://localhost:3000)
-
----
-
-## 🔍 Testes de Segurança
-
-O sistema foi desenvolvido para resistir a ataques comuns de OWASP:
-
-| Tipo de Ataque | Proteção Implementada |
-|----------------|-----------------------|
-| **SQL Injection** | Uso de `prepared statements` (`?` placeholders) |
-| **XSS** | Escapamento automático do EJS |
-| **CSRF** | Middleware `csurf` + tokens em todos os formulários |
-| **Brute Force** | `express-rate-limit` + bloqueio de IP |
-| **Session Hijacking** | Cookies `httpOnly`, `sameSite`, `secure` em produção |
-| **Password Cracking** | Criptografia `bcrypt` com salt |
-
----
-
-## 🧾 Logs de Tentativas
-
-Os logs ficam armazenados:
-- No banco MySQL (`login_attempts`);
-- Localmente em: `/logs/login.log`.
-
-Exemplo de entrada no arquivo:
+Usar MySQL (opcional)
+1. Crie o banco e usuário (Workbench / console):
+```sql
+CREATE DATABASE IF NOT EXISTS sistema_seguro CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+CREATE USER IF NOT EXISTS 'sistema_user'@'localhost' IDENTIFIED BY 'senha_segura';
+GRANT ALL PRIVILEGES ON sistema_seguro.* TO 'sistema_user'@'localhost';
+FLUSH PRIVILEGES;
 ```
-[2025-10-16T12:25:47Z] [FAIL] user@example.com - 127.0.0.1 - Senha incorreta
-[2025-10-16T12:26:03Z] [SUCCESS] user@example.com - 127.0.0.1 - Login bem-sucedido
-[2025-10-16T12:29:12Z] [BLOCKED] user@example.com - 127.0.0.1 - IP bloqueado por excesso de falhas
+2. Atualize `.env` para `DB_DIALECT=mysql` e preencha `DB_NAME`, `DB_USER`, `DB_PASS`, `DB_HOST`.
+3. Instale driver MySQL:
+```powershell
+npm install mysql2
+```
+4. Rode `npm run init-db` para sincronizar tabelas (ou use migrations em produção).
+
+Scripts npm úteis
+- start: `npm start` (node src/app.js)
+- dev: `npm run dev` (nodemon src/app.js)
+- init-db: `npm run init-db` (sincroniza DB)
+- create-admin: `npm run create-admin` (cria/promove admin)
+
+Rotas principais (páginas)
+- GET / -> index
+- GET /login -> página de login
+- GET /register -> página de registro
+- GET /dashboard -> dashboard (requer sessão)
+
+Rotas de formulário
+- POST /register -> registra usuário
+- POST /login -> autentica
+- POST /logout -> encerra sessão
+
+API (JSON)
+- GET /api/me -> retorna { logged, user } (sem passwordHash)
+- GET /api/admin/users -> lista usuários (somente isAdmin)
+- POST /api/admin/promote/:id -> promove usuário para admin (somente isAdmin)
+
+Como testar localmente
+1. Configure `.env`
+2. Inicialize DB: `npm run init-db`
+3. Inicie servidor: `npm run dev`
+4. Abra no navegador: http://localhost:3000
+
+Observações de segurança / produção
+- Troque `SESSION_SECRET` por um valor forte.
+- Em produção, use HTTPS, secure cookies e store de sessão persistente (Redis, DB).
+- Evite `sequelize.sync({ alter: true })` em produção — use migrations.
+- Habilite CSRF e validação de entrada onde necessário.
+- Proteja endpoints de administração com lógica de autorização adicional.
+
+Estrutura do projeto (resumo)
+- src/
+  - app.js
+  - db.js
+  - controllers/
+    - authController.js
+  - models/
+    - User.js
+  - routes/
+    - authRoutes.js
+  - scripts/
+    - create_admin.js
+  - tools/
+    - init_db.js
+- public/
+  - index.html, login.html, register.html, dashboard.html
+  - css/
+- data/
+  - sqlite/ (arquivo do sqlite — gitignored)
+
+Ajuda / debugging
+- Logs do servidor aparecem no terminal onde você rodar `npm run dev`.
+- Erros de driver (sqlite3/mysql2) = instale driver correspondente.
+- Problemas com push/git: verifique remoto, credenciais e branches.
+
+Licença
+- ISC (editar em package.json conforme necessário)
+
+Se quiser, eu gero um `README` mais curto focado apenas em MySQL ou apenas em SQLite — qual prefere?// filepath: c:\Users\silas\Desktop\projetinhos davi\PORTIFOLIO\PROJETO1\README.md
+# Meu Sistema Seguro
+
+API/pequeno sistema de autenticação com páginas estáticas (login/register/dashboard), suporte a administração (campo `isAdmin`) e opção de banco SQLite (padrão) ou MySQL.
+
+Resumo rápido
+- Frontend leve: arquivos em `public/`
+- Back-end: Express (rotas em `src/`), sessões com `express-session`
+- Banco: SQLite por padrão (arquivo em `data/sqlite/database.sqlite`) — também possível usar MySQL
+- ORM: Sequelize (para SQLite/MySQL). Existe código legado com Mongoose em versões antigas — verifique `src/db.js` ou `app.js` para qual driver está ativo.
+
+Pré-requisitos
+- Node.js v16+ / npm
+- (Opcional MySQL) MySQL server + MySQL Workbench
+
+Como baixar
+PowerShell:
+```powershell
+git clone <URL_DO_REPO> Projeto
+cd Projeto
 ```
 
----
+Instalação
+```powershell
+# instalar dependências
+npm install
 
-## 🧑‍💼 Perfis de Usuário
-
-| Tipo | Descrição |
-|------|------------|
-| **Usuário comum** | Pode se cadastrar, fazer login e acessar o dashboard. |
-| **Administrador (futuro)** | Pode acessar `/logs` e visualizar tentativas de login. |
-
----
-
-## 📈 Melhorias futuras
-
-- [ ] Recuperação de senha via e-mail  
-- [ ] Two-Factor Authentication (2FA)  
-- [ ] Painel administrativo completo com filtros e paginação  
-- [ ] Dashboard com estatísticas de segurança  
-- [ ] Integração com Redis para performance de sessões  
-
----
-
-## 🧰 Ferramentas de Teste Sugeridas
-
-Você pode testar a segurança localmente com:
-
-```bash
-# Testar injeções SQL
-sqlmap -u "http://localhost:3000/login" --data "email=test&password=123&_csrf=token" -p email
-
-# Testar força bruta / rate limit
-for i in {1..10}; do curl -X POST -d "email=a@b.com&password=errado" http://localhost:3000/login; done
+# instalar dependências nativas caso necessário (Windows)
+# npm install --global windows-build-tools  (se der erro ao instalar sqlite3)
 ```
 
----
+Variáveis de ambiente
+Crie um arquivo `.env` na raiz (use `.env.example` como base). Principais variáveis:
 
-## Autor
+```env
+# Para SQLite (padrão)
+DB_DIALECT=sqlite
+DB_STORAGE=./data/sqlite/database.sqlite
 
-**Desenvolvido por:**  
-> Davi Silva — Desenvolvedor Em Aprendizagem  
-> 💼 Foco em segurança, back-end e integração com banco de dados  
-> 🌐 [GitHub](https://github.com/seuusuario) • [LinkedIn](https://linkedin.com/in/seuusuario)
+# Para MySQL (se preferir)
+# DB_DIALECT=mysql
+# DB_NAME=sistema_seguro
+# DB_USER=root
+# DB_PASS=senha
+# DB_HOST=127.0.0.1
+# DB_PORT=3306
 
----
+SESSION_SECRET=troque_em_producao
+PORT=3000
+```
 
-## 📜 Licença
-ainda precisa arrumar uma.
----
+Inicializar banco (SQLite) e criar um admin opcional
+```powershell
+# cria pasta do DB, sincroniza modelos e (opcional) cria um admin
+npm run init-db
+# com admin
+npm run init-db -- admin@exemplo.com MinhaSenhaForte "Admin"
+```
+(ou)
+```powershell
+node src/tools/init_db.js admin@exemplo.com SenhaForte! "Administrador"
+```
 
-## 🛡️ Conclusão
+Criar admin manualmente
+```powershell
+npm run create-admin -- admin@exemplo.com SenhaForte!
+# ou
+node src/scripts/create_admin.js admin@exemplo.com SenhaForte! "Administrador"
+```
 
-O **Sistema Seguro** foi desenvolvido para ser um exemplo sólido de **boas práticas de segurança em aplicações web Node.js**.  
-Ele serve como base para projetos profissionais, portfólios ou aplicações reais que exigem autenticação confiável, auditoria e rastreamento de tentativas suspeitas.
+Usar MySQL (opcional)
+1. Crie o banco e usuário (Workbench / console):
+```sql
+CREATE DATABASE IF NOT EXISTS sistema_seguro CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+CREATE USER IF NOT EXISTS 'sistema_user'@'localhost' IDENTIFIED BY 'senha_segura';
+GRANT ALL PRIVILEGES ON sistema_seguro.* TO 'sistema_user'@'localhost';
+FLUSH PRIVILEGES;
+```
+2. Atualize `.env` para `DB_DIALECT=mysql` e preencha `DB_NAME`, `DB_USER`, `DB_PASS`, `DB_HOST`.
+3. Instale driver MySQL:
+```powershell
+npm install mysql2
+```
+4. Rode `npm run init-db` para sincronizar tabelas (ou use migrations em produção).
+
+Scripts npm úteis
+- start: `npm start` (node src/app.js)
+- dev: `npm run dev` (nodemon src/app.js)
+- init-db: `npm run init-db` (sincroniza DB)
+- create-admin: `npm run create-admin` (cria/promove admin)
+
+Rotas principais (páginas)
+- GET / -> index
+- GET /login -> página de login
+- GET /register -> página de registro
+- GET /dashboard -> dashboard (requer sessão)
+
+Rotas de formulário
+- POST /register -> registra usuário
+- POST /login -> autentica
+- POST /logout -> encerra sessão
+
+API (JSON)
+- GET /api/me -> retorna { logged, user } (sem passwordHash)
+- GET /api/admin/users -> lista usuários (somente isAdmin)
+- POST /api/admin/promote/:id -> promove usuário para admin (somente isAdmin)
+
+Como testar localmente
+1. Configure `.env`
+2. Inicialize DB: `npm run init-db`
+3. Inicie servidor: `npm run dev`
+4. Abra no navegador: http://localhost:3000
+
+Observações de segurança / produção
+- Troque `SESSION_SECRET` por um valor forte.
+- Em produção, use HTTPS, secure cookies e store de sessão persistente (Redis, DB).
+- Evite `sequelize.sync({ alter: true })` em produção — use migrations.
+- Habilite CSRF e validação de entrada onde necessário.
+- Proteja endpoints de administração com lógica de autorização adicional.
+
+Estrutura do projeto (resumo)
+- src/
+  - app.js
+  - db.js
+  - controllers/
+    - authController.js
+  - models/
+    - User.js
+  - routes/
+    - authRoutes.js
+  - scripts/
+    - create_admin.js
+  - tools/
+    - init_db.js
+- public/
+  - index.html, login.html, register.html, dashboard.html
+  - css/
+- data/
+  - sqlite/ (arquivo do sqlite — gitignored)
+
+Ajuda / debugging
+- Logs do servidor aparecem no terminal onde você rodar `npm run dev`.
+- Erros de driver (sqlite3/mysql2) = instale driver correspondente.
+- Problemas com push/git: verifique remoto, credenciais e branches.
+
+Licença
+- ISC
