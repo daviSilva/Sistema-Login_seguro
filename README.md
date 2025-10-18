@@ -1,294 +1,143 @@
-# Meu Sistema Seguro
+# Sistema-Seguro
 
-API/pequeno sistema de autenticação com páginas estáticas (login/register/dashboard), suporte a administração (campo `isAdmin`) e opção de banco SQLite (padrão) ou MySQL.
+API simples de autenticação com painel (dashboard) e telas estáticas. Projeto organizado com Sequelize + SQLite (padrão). Inclui páginas: index, login, register e dashboard com subpáginas (perfil, usuários, configurações, relatórios).
 
-Resumo rápido
-- Frontend leve: arquivos em `public/`
-- Back-end: Express (rotas em `src/`), sessões com `express-session`
-- Banco: SQLite por padrão (arquivo em `data/sqlite/database.sqlite`) — também possível usar MySQL
-- ORM: Sequelize (para SQLite/MySQL). Existe código legado com Mongoose em versões antigas — verifique `src/db.js` ou `app.js` para qual driver está ativo.
+---
 
-Pré-requisitos
-- Node.js v16+ / npm
-- (Opcional MySQL) MySQL server + MySQL Workbench
+## Sumário rápido
+- Backend: Node.js + Express
+- ORM: Sequelize (SQLite por padrão; MySQL opcional)
+- Frontend: arquivos estáticos em `public/`
+- DB local: `data/sqlite/database.sqlite` (gitignored)
+- Scripts npm: `start`, `dev`, `init-db`, `create-admin`
 
-Como baixar
-PowerShell:
+---
+
+## Requisitos
+- Node.js v16+ e npm
+- (Opcional MySQL) servidor MySQL + `mysql2` npm package
+
+---
+
+## Instalação (Windows PowerShell)
+1. Abrir pasta do projeto:
 ```powershell
-git clone <URL_DO_REPO> Projeto
-cd Projeto
+cd "C:\Users\silas\Desktop\projetinhos davi\PORTIFOLIO\PROJETO1\Sistema-Seguro"
 ```
-
-Instalação
+2. Instalar dependências:
 ```powershell
-# instalar dependências
 npm install
-
-# instalar dependências nativas caso necessário (Windows)
-# npm install --global windows-build-tools  (se der erro ao instalar sqlite3)
+# se faltar o driver sqlite:
+npm install sqlite3
+# se usar MySQL:
+# npm install mysql2
 ```
 
-Variáveis de ambiente
-Crie um arquivo `.env` na raiz (use `.env.example` como base). Principais variáveis:
-
-```env
-# Para SQLite (padrão)
+3. Criar `.env` (copiar de `.env.example` e ajustar):
+```
 DB_DIALECT=sqlite
 DB_STORAGE=./data/sqlite/database.sqlite
-
-# Para MySQL (se preferir)
-# DB_DIALECT=mysql
-# DB_NAME=sistema_seguro
-# DB_USER=root
-# DB_PASS=senha
-# DB_HOST=127.0.0.1
-# DB_PORT=3306
-
 SESSION_SECRET=troque_em_producao
 PORT=3000
 ```
 
-Inicializar banco (SQLite) e criar um admin opcional
-```powershell
-# cria pasta do DB, sincroniza modelos e (opcional) cria um admin
-npm run init-db
-# com admin
-npm run init-db -- admin@exemplo.com MinhaSenhaForte "Admin"
-```
-(ou)
-```powershell
-node src/tools/init_db.js admin@exemplo.com SenhaForte! "Administrador"
-```
+---
 
-Criar admin manualmente
+## Inicializar banco e criar admin
+- Sincronizar modelos / criar arquivo SQLite:
 ```powershell
-npm run create-admin -- admin@exemplo.com SenhaForte!
+npm run init-db
+```
+- Criar/promover admin:
+```powershell
+npm run create-admin -- admin@exemplo.com SenhaForte! "Administrador"
 # ou
 node src/scripts/create_admin.js admin@exemplo.com SenhaForte! "Administrador"
 ```
 
-Usar MySQL (opcional)
-1. Crie o banco e usuário (Workbench / console):
-```sql
-CREATE DATABASE IF NOT EXISTS sistema_seguro CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-CREATE USER IF NOT EXISTS 'sistema_user'@'localhost' IDENTIFIED BY 'senha_segura';
-GRANT ALL PRIVILEGES ON sistema_seguro.* TO 'sistema_user'@'localhost';
-FLUSH PRIVILEGES;
-```
-2. Atualize `.env` para `DB_DIALECT=mysql` e preencha `DB_NAME`, `DB_USER`, `DB_PASS`, `DB_HOST`.
-3. Instale driver MySQL:
+Para MySQL: ajustar `.env` (DB_DIALECT=mysql, DB_NAME, DB_USER, DB_PASS, DB_HOST, DB_PORT) e instalar `mysql2`, depois `npm run init-db`.
+
+---
+
+## Executar (desenvolvimento)
 ```powershell
-npm install mysql2
-```
-4. Rode `npm run init-db` para sincronizar tabelas (ou use migrations em produção).
-
-Scripts npm úteis
-- start: `npm start` (node src/app.js)
-- dev: `npm run dev` (nodemon src/app.js)
-- init-db: `npm run init-db` (sincroniza DB)
-- create-admin: `npm run create-admin` (cria/promove admin)
-
-Rotas principais (páginas)
-- GET / -> index
-- GET /login -> página de login
-- GET /register -> página de registro
-- GET /dashboard -> dashboard (requer sessão)
-
-Rotas de formulário
-- POST /register -> registra usuário
-- POST /login -> autentica
-- POST /logout -> encerra sessão
-
-API (JSON)
-- GET /api/me -> retorna { logged, user } (sem passwordHash)
-- GET /api/admin/users -> lista usuários (somente isAdmin)
-- POST /api/admin/promote/:id -> promove usuário para admin (somente isAdmin)
-
-Como testar localmente
-1. Configure `.env`
-2. Inicialize DB: `npm run init-db`
-3. Inicie servidor: `npm run dev`
-4. Abra no navegador: http://localhost:3000
-
-Observações de segurança / produção
-- Troque `SESSION_SECRET` por um valor forte.
-- Em produção, use HTTPS, secure cookies e store de sessão persistente (Redis, DB).
-- Evite `sequelize.sync({ alter: true })` em produção — use migrations.
-- Habilite CSRF e validação de entrada onde necessário.
-- Proteja endpoints de administração com lógica de autorização adicional.
-
-Estrutura do projeto (resumo)
-- src/
-  - app.js
-  - db.js
-  - controllers/
-    - authController.js
-  - models/
-    - User.js
-  - routes/
-    - authRoutes.js
-  - scripts/
-    - create_admin.js
-  - tools/
-    - init_db.js
-- public/
-  - index.html, login.html, register.html, dashboard.html
-  - css/
-- data/
-  - sqlite/ (arquivo do sqlite — gitignored)
-
-Ajuda / debugging
-- Logs do servidor aparecem no terminal onde você rodar `npm run dev`.
-- Erros de driver (sqlite3/mysql2) = instale driver correspondente.
-- Problemas com push/git: verifique remoto, credenciais e branches.
-
-Licença
-- ISC (editar em package.json conforme necessário)
-
-Se quiser, eu gero um `README` mais curto focado apenas em MySQL ou apenas em SQLite — qual prefere?// filepath: c:\Users\silas\Desktop\projetinhos davi\PORTIFOLIO\PROJETO1\README.md
-# Meu Sistema Seguro
-
-API/pequeno sistema de autenticação com páginas estáticas (login/register/dashboard), suporte a administração (campo `isAdmin`) e opção de banco SQLite (padrão) ou MySQL.
-
-Resumo rápido
-- Frontend leve: arquivos em `public/`
-- Back-end: Express (rotas em `src/`), sessões com `express-session`
-- Banco: SQLite por padrão (arquivo em `data/sqlite/database.sqlite`) — também possível usar MySQL
-- ORM: Sequelize (para SQLite/MySQL). Existe código legado com Mongoose em versões antigas — verifique `src/db.js` ou `app.js` para qual driver está ativo.
-
-Pré-requisitos
-- Node.js v16+ / npm
-- (Opcional MySQL) MySQL server + MySQL Workbench
-
-Como baixar
-PowerShell:
-```powershell
-git clone <URL_DO_REPO> Projeto
-cd Projeto
-```
-
-Instalação
-```powershell
-# instalar dependências
-npm install
-
-# instalar dependências nativas caso necessário (Windows)
-# npm install --global windows-build-tools  (se der erro ao instalar sqlite3)
-```
-
-Variáveis de ambiente
-Crie um arquivo `.env` na raiz (use `.env.example` como base). Principais variáveis:
-
-```env
-# Para SQLite (padrão)
-DB_DIALECT=sqlite
-DB_STORAGE=./data/sqlite/database.sqlite
-
-# Para MySQL (se preferir)
-# DB_DIALECT=mysql
-# DB_NAME=sistema_seguro
-# DB_USER=root
-# DB_PASS=senha
-# DB_HOST=127.0.0.1
-# DB_PORT=3306
-
-SESSION_SECRET=troque_em_producao
-PORT=3000
-```
-
-Inicializar banco (SQLite) e criar um admin opcional
-```powershell
-# cria pasta do DB, sincroniza modelos e (opcional) cria um admin
-npm run init-db
-# com admin
-npm run init-db -- admin@exemplo.com MinhaSenhaForte "Admin"
-```
-(ou)
-```powershell
-node src/tools/init_db.js admin@exemplo.com SenhaForte! "Administrador"
-```
-
-Criar admin manualmente
-```powershell
-npm run create-admin -- admin@exemplo.com SenhaForte!
+npm run dev   # nodemon src/app.js
 # ou
-node src/scripts/create_admin.js admin@exemplo.com SenhaForte! "Administrador"
+npm start
+```
+Abrir: http://localhost:3000
+
+---
+
+## Rotas principais (páginas)
+- GET / → public/index.html  
+- GET /login → public/login.html  
+- GET /register → public/register.html  
+- GET /dashboard → public/dashboard.html (requer sessão)  
+- GET /dashboard/profile, /dashboard/settings, /dashboard/reports, /dashboard/users
+
+APIs JSON:
+- GET /api/me — { logged, user }  
+- GET /api/reports — KPIs e usuários recentes (requer autenticação)  
+- GET /api/admin/users — lista usuários (admin)  
+- POST /api/admin/promote/:id — promove usuário para admin (admin)
+
+Exemplo curl:
+```bash
+# ver usuário logado (cookies da sessão não são transmitidos aqui; apenas exemplo)
+curl -i http://localhost:3000/api/reports
 ```
 
-Usar MySQL (opcional)
-1. Crie o banco e usuário (Workbench / console):
-```sql
-CREATE DATABASE IF NOT EXISTS sistema_seguro CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-CREATE USER IF NOT EXISTS 'sistema_user'@'localhost' IDENTIFIED BY 'senha_segura';
-GRANT ALL PRIVILEGES ON sistema_seguro.* TO 'sistema_user'@'localhost';
-FLUSH PRIVILEGES;
-```
-2. Atualize `.env` para `DB_DIALECT=mysql` e preencha `DB_NAME`, `DB_USER`, `DB_PASS`, `DB_HOST`.
-3. Instale driver MySQL:
-```powershell
-npm install mysql2
-```
-4. Rode `npm run init-db` para sincronizar tabelas (ou use migrations em produção).
+---
 
-Scripts npm úteis
-- start: `npm start` (node src/app.js)
-- dev: `npm run dev` (nodemon src/app.js)
-- init-db: `npm run init-db` (sincroniza DB)
-- create-admin: `npm run create-admin` (cria/promove admin)
-
-Rotas principais (páginas)
-- GET / -> index
-- GET /login -> página de login
-- GET /register -> página de registro
-- GET /dashboard -> dashboard (requer sessão)
-
-Rotas de formulário
-- POST /register -> registra usuário
-- POST /login -> autentica
-- POST /logout -> encerra sessão
-
-API (JSON)
-- GET /api/me -> retorna { logged, user } (sem passwordHash)
-- GET /api/admin/users -> lista usuários (somente isAdmin)
-- POST /api/admin/promote/:id -> promove usuário para admin (somente isAdmin)
-
-Como testar localmente
-1. Configure `.env`
-2. Inicialize DB: `npm run init-db`
-3. Inicie servidor: `npm run dev`
-4. Abra no navegador: http://localhost:3000
-
-Observações de segurança / produção
-- Troque `SESSION_SECRET` por um valor forte.
-- Em produção, use HTTPS, secure cookies e store de sessão persistente (Redis, DB).
-- Evite `sequelize.sync({ alter: true })` em produção — use migrations.
-- Habilite CSRF e validação de entrada onde necessário.
-- Proteja endpoints de administração com lógica de autorização adicional.
-
-Estrutura do projeto (resumo)
+## Estrutura do projeto
 - src/
   - app.js
   - db.js
   - controllers/
-    - authController.js
   - models/
-    - User.js
-  - routes/
-    - authRoutes.js
-  - scripts/
-    - create_admin.js
-  - tools/
-    - init_db.js
-- public/
-  - index.html, login.html, register.html, dashboard.html
-  - css/
-- data/
-  - sqlite/ (arquivo do sqlite — gitignored)
+  - scripts/ (create_admin.js)
+  - tools/ (init_db.js)
+- public/ (html, css, dashboard/*)
+- data/sqlite/ (database.sqlite) — geralmente gerado em runtime
+- package.json, .env.example, README.md
 
-Ajuda / debugging
-- Logs do servidor aparecem no terminal onde você rodar `npm run dev`.
-- Erros de driver (sqlite3/mysql2) = instale driver correspondente.
-- Problemas com push/git: verifique remoto, credenciais e branches.
+---
 
-Licença
-- ISC
+## Troubleshooting
+- ENOENT public/index.html  
+  - Verifique se `public/index.html` existe:
+    ```powershell
+    Test-Path .\public\index.html
+    dir .\public
+    ```
+  - Se estiver em `src/public`, mova:
+    ```powershell
+    if (-not (Test-Path .\public)) { New-Item -ItemType Directory -Path .\public }
+    Move-Item -Force .\src\public\* .\public\
+    ```
+- Erro `Please install sqlite3 package manually` → `npm install sqlite3`
+- Erro de push Git (403) → usar PAT ou configurar SSH. Remova credenciais antigas no Credential Manager se necessário.
+
+---
+
+## Segurança e produção (resumo)
+- Troque `SESSION_SECRET` por valor forte.
+- Em produção usar HTTPS, cookie secure e store de sessão persistente (Redis/DB).
+- Evitar `sequelize.sync({ alter: true })` em produção — usar migrations.
+- Validar/escapar entrada do usuário e ativar CSRF onde aplicável.
+
+---
+
+## Comandos úteis
+```powershell
+# sincronizar DB e criar admin
+npm run init-db -- admin@exemplo.com SenhaForte! "Admin"
+
+# criar só admin
+npm run create-admin -- admin@exemplo.com SenhaForte!
+
+# development
+npm run dev
+```
+
