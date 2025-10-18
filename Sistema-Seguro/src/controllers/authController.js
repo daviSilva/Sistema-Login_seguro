@@ -1,12 +1,37 @@
 const path = require('path');
+const fs = require('fs');
 const bcrypt = require('bcryptjs');
 const User = require('../models/User');
 
-exports.getLogin = (req, res) => res.sendFile(path.join(__dirname, '..', 'public', 'login.html'));
-exports.getRegister = (req, res) => res.sendFile(path.join(__dirname, '..', 'public', 'register.html'));
+// Resolve dinamicamente a pasta "public" (mesma estratégia do app.js)
+const candidates = [
+  path.join(__dirname, '..', 'public'),       // src/../public
+  path.join(__dirname, 'public'),             // src/public
+  path.join(process.cwd(), 'public'),         // cwd/public
+  path.join(process.cwd(), 'src', 'public')   // cwd/src/public
+];
+let PUBLIC_DIR = null;
+for (const c of candidates) {
+  try {
+    const stat = fs.statSync(c);
+    if (stat && stat.isDirectory()) { PUBLIC_DIR = c; break; }
+  } catch (e) { /* não existe */ }
+}
+if (!PUBLIC_DIR) {
+  // fallback para cwd/public — manter mensagem clara
+  PUBLIC_DIR = path.join(process.cwd(), 'public');
+  console.warn('Pasta public não encontrada nas candidatas, usando fallback:', PUBLIC_DIR);
+}
+
+exports.getLogin = (req, res) => {
+  return res.sendFile(path.join(PUBLIC_DIR, 'login.html'));
+};
+exports.getRegister = (req, res) => {
+  return res.sendFile(path.join(PUBLIC_DIR, 'register.html'));
+};
 exports.getDashboard = (req, res) => {
-  if (!req.session.userId) return res.redirect('/login');
-  return res.sendFile(path.join(__dirname, '..', 'public', 'dashboard.html'));
+  if (!req.session || !req.session.userId) return res.redirect('/login');
+  return res.sendFile(path.join(PUBLIC_DIR, 'dashboard.html'));
 };
 
 exports.postRegister = async (req, res) => {
@@ -45,24 +70,58 @@ exports.postLogout = (req, res) => {
   req.session.destroy(() => res.redirect('/login'));
 };
 
+const ensureAuth = (req, res) => {
+  if (!req.session || !req.session.userId) {
+    return res.redirect('/login');
+  }
+  return true;
+};
+
+exports.getDashboard = (req, res) => {
+  if (!ensureAuth(req, res)) return;
+  return res.sendFile(path.join(PUBLIC_DIR, 'dashboard.html'));
+};
+
+exports.getDashboardProfile = (req, res) => {
+  if (!ensureAuth(req, res)) return;
+  return res.sendFile(path.join(PUBLIC_DIR, 'dashboard', 'profile.html'));
+};
+
+exports.getDashboardSettings = (req, res) => {
+  if (!ensureAuth(req, res)) return;
+  return res.sendFile(path.join(PUBLIC_DIR, 'dashboard', 'settings.html'));
+};
+
+exports.getDashboardReports = (req, res) => {
+  if (!ensureAuth(req, res)) return;
+  return res.sendFile(path.join(PUBLIC_DIR, 'dashboard', 'reports.html'));
+};
+
+exports.getDashboardUsers = async (req, res) => {
+  if (!ensureAuth(req, res)) return;
+  const me = await User.findByPk(req.session.userId);
+  if (!me || !me.isAdmin) return res.status(403).send('Forbidden');
+  return res.sendFile(path.join(PUBLIC_DIR, 'dashboard', 'users.html'));
+};
+
 exports.apiMe = async (req, res) => {
-  if (!req.session.userId) return res.json({ logged: false });
-  const user = await User.findByPk(req.session.userId, { attributes: ['id', 'name', 'email', 'isAdmin'] });
+  if (!req.session || !req.session.userId) return res.json({ logged: false });
+  const user = await User.findByPk(req.session.userId, { attributes: ['id','name','email','isAdmin'] });
   if (!user) return res.json({ logged: false });
   return res.json({ logged: true, user });
 };
 
 exports.getAdminUsers = async (req, res) => {
-  if (!req.session.userId) return res.status(401).json({ error: 'Not authenticated' });
+  if (!req.session || !req.session.userId) return res.status(401).json({ error: 'Not authenticated' });
   const me = await User.findByPk(req.session.userId);
   if (!me || !me.isAdmin) return res.status(403).json({ error: 'Forbidden' });
-  const users = await User.findAll({ attributes: ['id', 'name', 'email', 'isAdmin', 'createdAt'] });
+  const users = await User.findAll({ attributes: ['id','name','email','isAdmin','createdAt'] });
   return res.json({ users });
 };
 
 exports.promoteUser = async (req, res) => {
   try {
-    if (!req.session.userId) return res.status(401).json({ error: 'Not authenticated' });
+    if (!req.session || !req.session.userId) return res.status(401).json({ error: 'Not authenticated' });
     const me = await User.findByPk(req.session.userId);
     if (!me || !me.isAdmin) return res.status(403).json({ error: 'Forbidden' });
     const targetId = parseInt(req.params.id, 10);

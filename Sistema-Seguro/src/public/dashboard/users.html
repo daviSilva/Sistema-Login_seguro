@@ -1,0 +1,31 @@
+<!doctype html>
+<html>
+<head><meta charset="utf-8"><title>Usuários</title><link rel="stylesheet" href="/css/index.css"></head>
+<body>
+  <a href="/dashboard">← Voltar</a>
+  <h2>Usuários (Admin)</h2>
+  <div id="list">Carregando...</div>
+  <script>
+    async function load(){
+      const r = await fetch('/api/admin/users', { credentials: 'same-origin' });
+      if (!r.ok){ document.getElementById('list').textContent = 'Acesso negado ou erro'; return; }
+      const data = await r.json();
+      const html = data.users.map(u => 
+        `<div>#${u.id} - ${u.name || u.email} - ${u.email} - admin:${u.isAdmin ? 'sim' : 'não'}
+          ${!u.isAdmin ? '<button data-id="'+u.id+'" class="prom">Promover</button>' : ''}
+        </div>`
+      ).join('');
+      document.getElementById('list').innerHTML = html;
+      document.querySelectorAll('.prom').forEach(b=>{
+        b.addEventListener('click', async ()=>{
+          const id = b.dataset.id;
+          const p = await fetch('/api/admin/promote/'+id, { method: 'POST', credentials: 'same-origin' });
+          if (!p.ok) { alert('Erro ao promover'); return; }
+          alert('Promovido'); load();
+        });
+      });
+    }
+    load();
+  </script>
+</body>
+</html>

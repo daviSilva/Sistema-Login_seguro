@@ -15,6 +15,28 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 app.use(express.static(path.join(__dirname, '..', 'public')));
 
+// Resolve dinamicamente a pasta "public" (tenta vários caminhos comuns)
+const candidates = [
+  path.join(__dirname, '..', 'public'),       // src/../public
+  path.join(__dirname, 'public'),             // src/public
+  path.join(process.cwd(), 'public'),         // cwd/public
+  path.join(process.cwd(), 'src', 'public')   // cwd/src/public
+];
+let PUBLIC_DIR = null;
+for (const c of candidates) {
+  try {
+    const stat = require('fs').statSync(c);
+    if (stat && stat.isDirectory()) { PUBLIC_DIR = c; break; }
+  } catch (e) { /* não existe */ }
+}
+if (!PUBLIC_DIR) {
+  console.error('Pasta public não encontrada. Verifique a estrutura do projeto. Candidatos testados:', candidates);
+  process.exit(1);
+}
+console.log('Servindo arquivos estáticos de:', PUBLIC_DIR);
+app.use(express.static(PUBLIC_DIR));
+
+
 app.use(session({
   secret: process.env.SESSION_SECRET || 'seuSegredoSuperSeguro_troque_em_producao',
   resave: false,
@@ -27,10 +49,14 @@ app.use('/login', loginLimiter);
 app.use('/api/login', loginLimiter);
 
 // rotas
-app.get('/', (req, res) => res.sendFile(path.join(__dirname, '..', 'public', 'index.html')));
+app.get('/', (req, res) => res.sendFile(path.join(__dirname, '../src/public', 'index.html')));
 app.get('/login', authController.getLogin);
 app.get('/register', authController.getRegister);
 app.get('/dashboard', authController.getDashboard);
+app.get('/dashboard/profile', authController.getDashboardProfile);
+app.get('/dashboard/settings', authController.getDashboardSettings);
+app.get('/dashboard/reports', authController.getDashboardReports);
+app.get('/dashboard/users', authController.getDashboardUsers);
 
 app.post('/register', authController.postRegister);
 app.post('/login', authController.postLogin);

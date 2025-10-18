@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <title>Perfil — Meu Sistema Seguro</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link href="/css/profile.css" rel="stylesheet">
+  <link href="https://unpkg.com/lucide-static/font/lucide.css" rel="stylesheet">
+</head>
+<body>
+  <header class="header">
+    <div class="brand">
+      <div class="logo"></div>
+      <h1>Meu Sistema Seguro</h1>
+    </div>
+    <a href="/dashboard" class="btn"><i class="lucide lucide-arrow-left"></i> Voltar</a>
+  </header>
+
+  <main>
+    <h2>Meu Perfil</h2>
+    <div class="card" id="profile">
+      <p>Carregando informações...</p>
+    </div>
+  </main>
+
+  <script>
+    (async () => {
+      const r = await fetch('/api/me', { credentials: 'same-origin' });
+      const data = await r.json();
+      if (!data.logged) {
+        location.href = '/login';
+        return;
+      }
+      const u = data.user;
+      document.getElementById('profile').innerHTML = `
+        <div class="kv"><strong>Nome:</strong> <span>${u.name || ''}</span></div>
+        <div class="kv"><strong>Email:</strong> <span>${u.email}</span></div>
+        <div class="kv"><strong>Admin:</strong> <span>${u.isAdmin ? 'Sim' : 'Não'}</span></div>
+      `;
+    })();
+  </script>
+</body>
+</html>

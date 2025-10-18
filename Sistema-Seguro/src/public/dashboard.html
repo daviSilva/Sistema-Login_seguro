@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <title>Dashboard — Meu Sistema Seguro</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link href="/css/dashboard.css" rel="stylesheet">
+  <link href="https://unpkg.com/lucide-static/font/lucide.css" rel="stylesheet">
+</head>
+<body>
+  <!-- HEADER SUPERIOR -->
+  <header class="header">
+    <div class="brand">
+      <div class="logo"></div>
+      <h1>Meu Sistema Seguro</h1>
+    </div>
+    <div class="actions">
+      <form method="post" action="/logout">
+        <button class="btn secondary"><i class="lucide lucide-log-out"></i> Sair</button>
+      </form>
+    </div>
+  </header>
+
+  <!-- LAYOUT GERAL -->
+  <div class="layout">
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+      <nav>
+        <a href="/dashboard" class="active"><i class="lucide lucide-home"></i> Início</a>
+        <a href="/dashboard/profile"><i class="lucide lucide-user"></i> Perfil</a>
+        <a href="/dashboard/settings"><i class="lucide lucide-settings"></i> Configurações</a>
+        <a href="/dashboard/reports"><i class="lucide lucide-bar-chart-3"></i> Relatórios</a>
+        <a id="admin-link" href="/dashboard/users" style="display:none;">
+          <i class="lucide lucide-shield"></i> Usuários
+        </a>
+      </nav>
+    </aside>
+
+    <!-- CONTEÚDO PRINCIPAL -->
+    <main class="main">
+      <h2>Bem-vindo ao Painel</h2>
+      <p class="intro">Gerencie seu sistema com segurança e praticidade.</p>
+
+      <section class="cards">
+        <div class="card">
+          <div class="icon"><i class="lucide lucide-activity"></i></div>
+          <div class="text">
+            <strong>Sistema Ativo</strong>
+            <span>Todos os serviços estão operando normalmente.</span>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="icon"><i class="lucide lucide-lock"></i></div>
+          <div class="text">
+            <strong>Segurança</strong>
+            <span>Monitoramento em tempo real habilitado.</span>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="icon"><i class="lucide lucide-server"></i></div>
+          <div class="text">
+            <strong>Servidores</strong>
+            <span>3 instâncias rodando sem falhas.</span>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    async function fetchMe() {
+      const res = await fetch('/api/me', { credentials: 'same-origin' });
+      if (!res.ok) return null;
+      return res.json();
+    }
+
+    (async () => {
+      const info = await fetchMe();
+      if (info && info.logged && info.user.isAdmin) {
+        document.getElementById('admin-link').style.display = 'block';
+      }
+    })();
+  </script>
+</body>
+</html>
